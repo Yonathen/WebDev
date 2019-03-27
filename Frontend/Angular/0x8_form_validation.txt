@@ -17,6 +17,7 @@
 
         get name() { return this.profileForm.get('name');}
 3. BUILT-IN VALIDATORS
+
     static min(min: number): ValidatorFn
     static max(max: number): ValidatorFn
     static required(control: AbstractControl): ValidationErrors | null
