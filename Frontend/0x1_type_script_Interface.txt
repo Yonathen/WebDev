@@ -1,0 +1,63 @@
+INTRODUCTION
+===============
+- Core principle of TypeScript is that type-checking
+    focuses on the shape that values have.
+- Interfaces in TypeScripts are a powerfull way of
+    defining contracts with in your code as well as 
+    contracts with code outside of your project.
+
+OUR FIRST INTERFACE
+====================
+- First code
+    interface LabeledValue {
+        label: string;
+    }
+    function printLable(labelledObj: LabeledValue){
+        console.log(labelledObj.label);
+    }
+    let myObj = {size:10, label: "Size 10 Object"};
+    printLable(myObj);
+        - LabeledValue is a name we can now use
+            to describe the requirement.
+        - order doesnt matter, only properties
+            in the interface requires are present
+            and have the required type
+
+- Optional properties
+    interface SquareConfig {
+        color ?: string;
+        widht ?: number;
+    }
+    function createSquare (config: SquareConfig): {color:string; area:number}
+    {
+        let newSquare = {color:"White", area:100};
+        if(config.color){
+            newSquare.color = config.color;
+        }
+
+        if(config.widht){
+            newSquare.area = config.widht * config.widht;
+        }
+        return newSquare;
+    }
+    let mySquare = create({color:"black"});
+
+- Readonly properties
+    interface point {
+        readonly x: number;
+        readonly y: number;
+    }
+    let p1: point = {x:10, y:20};
+    p1.x = 5; // Error
+
+    let a: number[] = [1,2,3,4];
+    let ro: ReadonlyArray<number> = a;
+    ro[0] = 3; // Error
+    ro.push(5); // Error
+    ro = ro as number[];
+        -assigning entire readonly array to normal array is illegal
+
+    - readonly vs constant : use const for variable and readonly for
+        properties
+    
+

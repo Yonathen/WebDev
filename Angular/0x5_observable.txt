@@ -1,0 +1,236 @@
+1. OBSERVABLES
+    - provide support for passing messages between publishers and subscribers
+        in your application.
+    - offer significant benefits over other techniques for event handling, 
+        asynchronous programming and handling multiple values.
+    - subscribed consumer then receives notifications until the function 
+        completes or until they unsubscribe.
+    - observable can deliver multiple values of any type
+        literals, messages, or events, depending on the context
+    - example: Create an observable that will start listening to the geolocation 
+        update when a consumer subscribers
+
+        const locations = new Observable((observer) => {
+            const {next, error} = observer;
+            let watchId;
+
+            if('geolocation' in navigator) {
+                watchId = navigator.geolocation.watchPosition(next, error);
+            } else {
+                error('geolocation not available');
+            }
+
+            // When the consumer unsubscribes, 
+            // clean up data ready for next subscription.
+            return {unsubscribe() {navigator.geolocation.clearWatch(watchId);}};
+        });
+
+        // Call subscribe() to start listening for update
+        const locationsSubscription = locations.subscribe({
+            next (position) { console.log('Current Position: ', position); },
+            error (message) { console.log('Error getting locations:', message); }
+        });
+
+        // Stop listening for location after 10 seconds
+        setTimeout(()=>{ locationsSubscription.unsubscribe(); }, 10000);
+
+2. DEFINING OBSERVERS
+    - A handler for receiving observable notification implements the 
+        Observable interface.
+    - It is an object that defines the call back metthods to handle the 
+        three types of notifications tha an observable can send.
+        - next : Required. A handler for each delivered value.
+                    called zero or more times after execution starts.
+        - error : Optional. A handler for an error notification.
+                    halts execution of observable instance.
+        - complete : Optional. A handler for the execution-complete notification
+3. SUBSCRIBING
+    - An Observable instance begins publishing values only when someone 
+        subscribes to it.
+    - You subscribe by calling the subscribe() method of the instance
+        by passing an observer object to receive the notifications.
+    - common RxJs library functions
+        - of(...items) :- Returns an Observable instance of that synchronously
+            delivers the values provided as arguments.
+        - from(iterable) :- Converts its argument to an Observable instance.
+            This method is commonly used to convert an array to an observable.
+
+        const myObservable = of(1, 2, 3);
+
+        const myObserver = {
+            next: x => console.log('Observer got a next value: ' + x),
+            error: e => console.log('Observer got an error: ' + e),
+            complete: () => console.log('Observer got a complete notification')
+        };
+
+        myObservable.subscribe(myObserver);
+
+        /*
+        Logs:
+        Observer got a next value: 1
+        Observer got a next value: 2
+        Observer got a next value: 3
+        Observer got a complete notification
+        */
+
+        - optionaly subscribe() function can accept callback function defnitions
+            in line, for next, error, and complete handlers.
+4. CREATING OBSERVABLES
+    - Use Observable constructor to create an observable stream of any type.
+    - The constructor takes as its argument the subscriber function to run 
+        when the boservable's subscribe() nethod executes.
+    - To create an observable equivalent to the of(1,2,3)
+        // This function runs when subscribe is called
+        function sequenceSubscriber(observer) {
+            // synchronously deliver 1, 2 and 3, then complete
+            observer.next(1);
+            observer.next(2);
+            observer.next(3);
+            observer.complete();
+
+            return {unsubscribe() {}};
+        }
+
+        const sequence = new Observable(sequenceSubscriber);
+
+        sequence.subscribe({
+            next(num) { console.log(num): },
+            complete() { console.log("Finished"); }
+        })
+5. RxJs LIBRARY 
+    - Reactive Extensions for JavaScript
+    - is a library for reactive programing using observables that makes it 
+        easier to compose asynchronous or callback-based code.
+    - RxJs provides an implementation of the Observable type
+    - It is needed until the type becomes part of the language and until 
+        browser supports it.
+    - It provides utility functions for creating and working with observables 
+        - Converting existing code for asynchronous operations into observable
+        - Iteration through the values stream
+        - Mapping values to different types
+        - Filtering streams
+        - Composing multiple streams
+    - Creation functions
+        - RxJs offers a number of functions to create new Observables.
+        - These functions simplify creation of observable process from things
+            such as events, timers, promises, and so on.
+        - Creating an observable from promise
+            import { from } from 'rxjs';
+
+            // Create an boservable out of a promise
+            const data = from(fetch('/api/endpoint'));
+
+            // Subscribe to begin listening for async result
+            data.subscribe({
+                next(responce) {console.log(responce);},
+                error(e) {console.error(e);},
+                complete() {console.log("Completed")}
+            })
+        - Create an observable from counter
+            import { interval } from 'rxjs';
+
+            // Create an Observable that will publish a value on an interval
+            const seondsCounter = interval (1000);
+
+            // Subscribe to begin publishing values
+            seondsCounter.subscribe(n => console.log(`Its been ${n} seconds`));
+        - Create an observable from an event
+            import { fromEvent } from 'rxjs';
+
+            const el = document.getElementById("my-element");
+
+            // Create an Observable that will publish mouse movements
+            const mouseMoves = fromEvent(el, 'mousemove');
+
+            // Subscribe to start listening for mouse-move events
+            const subscription = mouseMoves.subscribe((evt: MouseEvent) => {
+                console.log(`Chords: ${evt.clientX} X ${evt.clientY}`);
+
+                // When the mouse moves over the upper-left of the screen
+                // unsubscribe to stop listening for mouse movements
+                if(evt.clientX < 40 && evt.clientY < 40) {
+                    subscription.unsubscribe();
+                }
+            });
+        - Create an observable that creates an AJAX request
+            import { ajax } from 'rxjs/ajax';
+
+            const apiData = ajax('/api/data');
+            apiData.subscribe(res => console.log(res.status, res.responce));
+
+    - Operator functions
+        - these are functions that build on the observables foundation to enable 
+            sopisticated maipulation of collections.
+        - they take configuration options and they return a function that takes a 
+            source observable.
+        - When executing this returned function, the operator observes the source 
+            observable's emitted values, transform them, and returns a new 
+            observable of those transformed values.
+        - Map operator
+            import { map } from 'rxjs/operators';
+
+            const nums  = of(1, 2, 3);
+
+            const sqrValues = map ( (val: number) => val * val);
+            const sqrNums = sqrValues(nums);
+
+            sqrNums.subscribe(x => console.log(x));
+
+            /*
+            Logs
+            1
+            4
+            9
+            */
+        - Common operators
+            - Creation : from, fromEvent, of
+            - Combination : combineLatest, concat, merge, 
+                            startWith, withLatestFrom, zip
+            - Filtering : debounceTime, distinctUntilChanged, 
+                            filter, take, takeUntil
+            - Transformation : bufferTime, concatMap, map,
+                                mergeMap, scan, switchMap
+            - Utility : tap
+            - Multicasting : share
+            
+        - Pipe function
+            - you can use pipes to link operators together.
+            - Pipes let you combine multiple functions into a single function.
+            - pipe() function takes as its input arguments that functions 
+                you want to combine and return a new function that,
+                when executed, runs the composed function in sequence.
+            - A set of operators applied to an observable is a recipe
+                (i.e set of instructions for producing value you're interested in.)
+            - you need to call subscribe() to produce a result throught the 
+                recipe.
+            - Standalone pipe function
+                import { filter, map } from 'rxjs/operators';
+
+                const nums = of (1,2,3,4,5);
+
+                // Create a function that accepts the Observable
+                const squareOddValues = pipe( 
+                    filter((n:number) => n%2 !== 0), 
+                    map (n => n*n)
+                );
+
+                // Create an Observable that will run the filter and map functions
+                const squareOdd = squareOddValues(num);
+
+                // Subscribe to run the combined functions
+                squareOdd.subscribe(x => console.log(x));
+            - Observable.pipe function
+                import {filter, map} from 'rxjs/operators';
+
+                const squareOdd = of(1, 2, 3, 4, 5)
+                    .pipe(
+                        filter(n => n % 2 !== 0),
+                        map (n => n * n)
+                    );
+                
+                // Subscribe to get values
+                squareOdd.subscribe(x => console.log(x))
+
+
+            
+

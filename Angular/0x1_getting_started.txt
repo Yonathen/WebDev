@@ -1,0 +1,64 @@
+1. PROJECT STRUCTURE
+    - node_modules : all libraries we need to build the angular
+    - src : source code for your application
+    - app/ : file related to our initial App component
+    - app.component.html : contains the template of the component
+    - app.component.scss : contains the css style of the component
+    - app.component.spec.ts : contains the test of our component
+    - app.component.ts : contains the logic of the component
+    - app.module.ts : contains the configuration of the App module
+    - assets : contains any static library
+    - index.html : main file of our app
+    - styles.scss : contains the global styles of our application
+    - angular.json : contains the configuration of our app
+
+2. COMPONENT OVERVIEW
+    - Small pieces of an interface that are independent of each other
+    - example
+        import {component} from '@angular/core';
+
+        @Component ({
+            selector: 'app-root',
+            templateUrl: './app.component.html',
+            styleUrls: ['./app.component.scss']
+        })
+
+        export class AppComponent {
+            title = 'app';
+        }
+    - Metadata
+        - @Component decorator which we imported in a first line allows us to 
+        specify a Metadata.
+        - templateUrl contains the URL to the html template 
+        - styleUrls : contains an array of Css styles to be used for styleing 
+        the component or path to the external file.
+3. CREATING AND EXPORTING COMPONENTS
+    - Create a new folder called components inside src
+    - Create a new folder and call it hello_world and inside components folder
+    - Create a new file called hello-world.component.html
+        <h1>Hello Angular World</h1>
+    - Create a new file called hello-world.component.ts
+        import {Component} from '@angular/core'
+
+        @Component({
+            selector: 'hello-world',
+            templateUrl: './hello-world.component.html'
+        });
+        export class HelloWorld{
+
+        }
+    - open app.module.ts
+        import { HelloWorld } from "./components/hello_world/hello_world.component"
+
+        @NgModule ({
+            declarations:[
+                ....,
+                HelloWorld
+            ]
+            ...
+            ..
+        });
+
+        export class AppModule {
+            
+        }

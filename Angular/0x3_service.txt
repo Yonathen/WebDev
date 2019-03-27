@@ -1,0 +1,89 @@
+1. WHY SERVICES
+    - Components shouldnt fetch or save data directly
+    - Components should focus on presenting data and delegate data access
+        to a service.
+    - Services are great way to share information among classes that 
+        dont know each other. 
+    - Creating service using Angular CLI
+        ng generate service hero
+    - Service is a broad category encompassing any value, function, or feature
+        that app needs.
+    - Angular distingush Components from services to increase modularity and 
+        reusability.
+    - Components job is to enable the user experience  and nothing more.
+    - Component delegates certain tasks to services, such as fetching data from
+        the server, validating user input, or logging directly to the console.
+2. Service Examples
+    - create a service class Logger in logger.service.ts
+        export class Logger {
+            log(msg:any) {console.log(msg);}
+            error(msg: any) {console.error(msg);}
+            warn(msg: any) {console.warn(msg);}
+        }
+
+    - create a service class Hero in hero.service.ts
+        export class HeroService {
+            private heroes: Hero[] = [];
+
+            constructor (
+                private backend: BackendService,
+                private logger: Logger
+            ) {}
+
+            getHeroes() {
+                this.backend.getAll(Hero).then( (heroes: Hero[]) => {
+                    this.logger.log(`Fetched ${heroes.length} heroes.`);
+                    this.heroes.push(...heroes);
+                });
+            }
+        } 
+    - Dependency injection (DI) : wired into the Angular framework and used
+        everywhere to provide new Components with the services or other things
+        needed.
+
+        +-----------------------------------------------------+
+        |                Injector                             |
+        |   +---------------------------------------------+   |
+        |   |   +-----------+   +-----------+             |   |
+        |   |   | Service A |   | Service B | ...         |   |
+        |   |   +-----------+   +-----------+             |   |
+        |   +---------------------------------------------+   |
+        +-----------------------------------------------------+
+        |          +------------------+                       |
+        |          |   Component      |                       |
+        |          | Constructor      |                       |
+        |          |     (Service B)  |                       |
+        |          +------------------+                       |
+        +-----------------------------------------------------+
+    - Providing services 
+        - you must register at least one provider of any service you are going
+            to use. 
+            - That can be part of the services own metadata, making that
+            service available everywhere 
+            - Or you can register providers with specific modules or components.
+        - @Injectable() decorator
+            - used to register providers in the metadata of the service
+                @Injectable({
+                    providerIn: 'root'
+                })
+            - You provide the service at root level, Angular creates a single
+                shared instance of HeroService and injects it into any class
+                that asks for it.
+        - @NgModule
+            - used to register instance of a service available to all comonents
+                in that NgModule.
+            - Use providers property of @NgModule() decorator
+                @NgModule({
+                    providers:[
+                        BackendService,
+                        Logger
+                    ],
+                    ....
+                })
+        - @Component
+            - use this to register providers available for this component 
+                @Component({
+                    selector: 'app-hero-list',
+                    templateUrl: './hero-list.component.html',
+                    providers: [HeroService]
+                })

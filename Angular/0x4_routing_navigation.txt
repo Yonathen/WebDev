@@ -1,0 +1,77 @@
+1. OVERVIEW
+    - Angular router enables navigation from one view to the next as the user
+        performs application tasks.
+    - Enter the url in the address bar and the browser navigates to the 
+        corresponding page.
+    - Click link on the page and the browser navigates to a new page
+    - click browser back and forward and the browser navigates
+        through the history of pages you have seen.
+2. Basics
+    - <base href="/">
+        - Most routing applications should add a <base> element to the index.html
+            as the first child in the <head> tag to tell the router how to compose
+            navigation URLs
+
+    - Router import   
+        - not part of angular core (part of @angular/router)
+        - import what you need from @angular/router as follows
+            import {RouterModule, Routes} from "@angular/router"
+    
+    - Configuration
+        - A router angular application has one singleton instance of Router 
+            service. 
+        - A router has no routes until configure it.
+        - The following Configuration
+            const appRoutes: Routes = [
+                {path: 'crisis-center', component: CrisisListComponent },
+                {path: 'hero/:id', component: HeroDetailComponent },
+                {path: 'heroes', component: HeroListComponent, data: {title: 'Heroes List'}},
+                {path: '', redirectTo: '/heroes', patchMatch: 'full'},
+                {path: '**', component: PageNotFoundComponent}
+            ];
+
+            @NgModule({
+                imports: [
+                    RouterModule.forRoot(
+                        appRoutes, 
+                        {enableTracing: true} // Debugging purpose only
+                    )
+                    // Other imports
+                ]
+            })
+
+            export class AppModule {}
+
+            - The appRoutes array of routes describes how to navigate.
+            - RouterOutlet is a directive from the router library that is used 
+                like a component. 
+                <router-outlet></router-outlet>
+            - Given the configuration above
+                - The browser URL for this application becomes /heroes, the 
+                    router matches that URL to the route path /heroes and
+                    displays the HeroListComponent as a sibling element to
+                    the RouterOutlet that you have placed in the host 
+                    component's template
+    - Router links
+        - Change the app.component.html
+            <a routerLink="/crisis-center" routerLinkActive="active">
+                Crisis center
+            </a>
+            <a routerLink="/heroes" routerLinkActive="active">
+                Heroes
+            </a>
+            <router-outlet></router-outlet>
+            - RouterLink directive give the router control over those elements
+            - RouterLinkActive toggles css classes for the active RouterLink
+                bindings based on the current RouterState.
+    - Router state
+        - The router builds a tree of ActivatedRoute objects that make up the
+            current state of the router.
+        - You can access the current RouterState from anywhere in the application
+            using the Router service and the routerState property.
+        - 
+            
+            
+            
+
+    

@@ -1,0 +1,44 @@
+1. TEMPLATE-DRIVEN VALIDATION
+2. REACTIVE FORM VALIDATION
+    - There are types of validator functions
+        - Sync validators: immediately return either a set of validation errors or null
+        - Async validators: return a Promise or Observable that later emits a set of validation
+            (For Performance reasons, Angular only runs async validators)
+    - In profile.component.ts 
+        ngOnInit(): void {
+            this.profileForm = new FormGroup({
+                firstName : new FormControl(this.hero.name, [
+                    Validators.required,
+                    Validators.minLength(4),
+                    forbiddenNameValidator(/bob/i) // <<< Custom validators
+                ])
+            })
+        }
+
+        get name() { return this.profileForm.get('name');}
+3. BUILT-IN VALIDATORS
+    static min(min: number): ValidatorFn
+    static max(max: number): ValidatorFn
+    static required(control: AbstractControl): ValidationErrors | null
+    static requiredTrue(control: AbstractControl): ValidationErrors | null
+    static email(control: AbstractControl): ValidationErrors | null
+    static minLength(minLength: number): ValidatorFn
+    static maxLength(maxLength: number): ValidatorFn
+    static pattern(pattern: string | RegExp): ValidatorFn
+    static nullValidator(control: AbstractControl): ValidationErrors | null
+    static compose(validators: ValidatorFn[]): ValidatorFn | null
+    static composeAsync(validators: AsyncValidatorFn[]): AsyncValidatorFn | null
+
+4. CUSTOM VALIDATORS
+    - Built-In Validators won't always match the exact use case of your 
+        application, sometimes you will want to create a custom validator.
+    - Consider forbiddenNameValidator in forbidden-name.directive.ts
+        export function forbiddenNameValidator (nameRe: RegExp): ValidatorFn {
+            return (control: AbstractControl): {[key:string]} | null => {
+                const forbidden = nameRe.test(control.value);
+                return forbidden ? {'forbiddenName' : {value: control.value}} : null;
+            }
+        }
+5. CONTROL STATUS CSS CLASSES
+6. CROSS FIELD VALIDATION
+7. ASYNC VALIDATION

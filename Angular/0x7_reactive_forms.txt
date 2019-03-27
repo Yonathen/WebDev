@@ -1,0 +1,217 @@
+1. INTRODUCTION
+    - Use an explicit and immutable approach to manage the state of a form
+        at a given point in time.
+    - Each change to the form state returns a new state, which maintanis the
+        the integrity of the model between changes.
+    - Reactive forms are built around observable streams, where form inputs and
+        values are provided as streams of input values, which can be accessed 
+        synchronously.
+
+2. GETTING STARTED
+    - import ReactiveFormsModule in the app.module.ts
+    - ng generate component NameEditor
+    - inside name-editor.component.ts
+        ..
+        import { FormControl } from '@angular/forms';
+
+        @Component({
+            ..
+            ...
+        })
+        export class NameEditorComponent{
+            name = new FormControl('');
+        }
+    - Registering the control in the tepmplate
+        <label>
+            Name:
+            <input type="text" [formControl]="name" >
+        </label>
+
+3. MANAGING CONTROL VALUES
+    - displaying form control value 
+        - In name-editor.component.html
+            <p> Value : {{ name.value }} </p>
+
+    - Replacing a form control value
+        - In name-editor.component.ts
+            updateName() {
+                this.name.setValue('Nancy');
+            }
+        - In name-editor.component.html
+            <button (click)="updateName()">Update Name</button>
+
+4. GROUPING FORM CONTROLS
+    - ng generate component Profile
+    - In profile.component.ts
+        import { FormGroup, FormControl } from '@angular/forms';
+    - Creating a FormGroup instance
+        ...
+        ....
+        @Component({
+            ...
+        })
+        export class Profile {
+            profileForm = new FormGroup({
+                firstName : new FormControl(''),
+                lastName : new FormControl('')
+            });
+        }
+        - FormGroup has same properties (shuc as value and untouched)
+            and methods ( such as setValue() ) as a form control instance.
+    - Associating the FormGroup model and view
+        - In profile.component.html
+            <form [FormGroup]="profileForm" (ngSubmit)="onSubmit()">
+                <label>
+                    First Name:
+                    <input type="text" formControlName="firstName" >
+                </label>
+                <label>
+                    Last Name:
+                    <input type="text" formControlName="lastName" >
+                </label>
+                <button type="submit" [disabled]="!profileForm.valid"> 
+                Submit </button>
+            </form>
+        - In profile.component.ts
+            onSubmit(){
+                console.log(this.profileForm.value);
+            }
+5. CREATING NESTED FORM GROUPS
+    - creating nested group in profile.component.ts
+        profileForm = new FormGroup({
+            firstName : new FormControl(''),
+            lastName : new FormControl(''),
+            address : new FormGroup({
+                street: new FormControl(''),
+                city : new FormControl(''),
+                state : new FormControl(''),
+                zip : new FormControl('')
+            })
+        });
+    - Grouping the nested form in the template
+        <div formGroupName="address">
+            <label>
+                Street:
+                <input type="text" formControlName="street" >
+            </label>
+            <label>
+                City:
+                <input type="text" formControlName="city" >
+            </label>
+            <label>
+                State:
+                <input type="text" formControlName="state" >
+            </label>
+            <label>
+                Zip:
+                <input type="text" formControlName="zip" >
+            </label>
+        </div>
+6. PARTIAL MODEL UPDATES
+    - When updating the value for a form group instance that contains multiple
+        controls, you may want to update on parts of the model.
+    - We use partial model update to update specific parts of a form control 
+        data model.
+    - There are two ways to update the model value
+        - setValue() : set a new value for an individual control.
+                        - This method stricktly adheres the structure of 
+                        the form group and replace entire value.
+                        - helps catch nesting error in complex forms
+        - patchValue() : method replace any propeties defined in the object
+                        that have changed in the form model.
+                        - fails silent on nesting errors
+    - In profile.component.ts
+        updateProfile() {
+            this.profileForm.patchValue({
+                firstName : 'Nancy',
+                address : {
+                    street : '123 Drew Street'
+                }
+            });
+        }
+    - In profile.component.html
+        <button (click)="updateProfile()"> Update Profile </button>
+
+7. GENERATING FORM CONTROLS WITH FORM BUILDER
+    - In profile.component.ts
+        import { FormBuilder } from '@angular/forms';
+    - Inject the form builder service
+        constructor(private fb: FormBuilder){ }
+    - Generate form controls
+        import { Component } from '@angular/core';
+        import { FormBuilder } from '@angular/forms';
+
+        @Component({
+            ...
+            ..
+        })
+        export class ProfileComponent {
+            profileForm = this.fb.group({
+                firstName : [''],
+                lastName : [''],
+                address : this.fb.group({
+                    street: [''],
+                    city : [''],
+                    state : [''],
+                    zip : ['']
+                })
+            });
+
+            constructor(private fb: FormBuilder) {}
+        }
+8. SIMPLE FORM VALIDATION
+    - In profile.component.ts
+        import { Validators } from "@angular/forms";
+    - Making fildes required
+        profileForm = this.fb.group({
+            firstName: ['', Validators.required],
+            lastName: [''],
+            address: this.fb.group({
+                street: [''],
+                city: [''],
+                state: [''],
+                zip: ['']
+            }),
+        });
+    - Displaying the status
+        <p> Form Status : {{ profileForm.status }} </p>
+
+9. DYNAMIC CONTROLS USING FORM ARRAYS
+    - FormArray is an alternative to FormGroup for managing any number of 
+        unnamed controls.
+    - import { FormArray } from '@angular/forms';
+    - Defining a FormArray control
+        profileForm = this.fb.group({
+            firstName: ['', Validators.required],
+            lastName: [''],
+            address: this.fb.group({
+                street: [''],
+                city: [''],
+                state: [''],
+                zip: ['']
+            }),
+            aliases: this.fb.array([
+                this.fb.control('')
+            ])
+        });
+    - Accessing and Adding the FormArray control
+        - In profile.component.ts
+            get aliases() {
+                return this.profileForm.get('aliases') as FormArray;
+            }
+            addAlias(){
+                this.aliases.push(this.fb.control(''));
+            }
+    - Displaying form array 
+        - In profile.component.html
+            <div formArrayName="aliases">
+                <h3>Aliases</h3>
+                <button (click)="addAlias()">Add Alias</button>
+
+                <div *ngFor="let address of aliases.controls; let i = index">
+                    <label>
+                        Alias:
+                        <input type="text" [formControlName]="i" >
+                    </label>
+                </div>
+            </div>

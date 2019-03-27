@@ -1,0 +1,273 @@
+1. EVENT COMPONENT
+    - Our app will consist of two components
+        - App component (main one): responsible for layout
+        - Event component (sub component): render single event entity
+    - Use the Angular CLI to generate new component
+        ng generate component event
+    - event.component.html
+        <h3>9:00 - Title</h3>
+    - event.component.ts
+        import {Component} from '@angular/core'
+
+        @Component({
+            selector: 'app-event',
+            templateUrl: './event.component.html'
+        })
+        export class EventComponent {
+
+        }
+    - import EventComponent in app.module.ts
+    - Rendering EventComponent in app.component.html:
+        ....
+        ..
+        <div class="col-md-9">
+            <app-event></app-event>
+            <app-event></app-event>
+        </div>
+
+2. PASSING DATA 
+    - Using <ng-content>
+        - change event.component.html to :
+            <ng-content></ng-content>
+        - Inside app.component.html
+            <div class="col-md-9">
+                <app-event>Event 1</app-event>
+            </div>
+    - using @Input()
+        - change event.component.ts
+            import {Component} from '@angular/core'
+
+            @Component({
+                selector: 'app-event',
+                templateUrl: './event.component.html'
+            })
+            export class EventComponent {
+                @Input() value: any;
+            }
+        - change event.component.html
+            <p>{{ value }}</p>
+        - Inside the parent component 
+            <div class="col-md-9">
+                <app-event [value]="5">Event 1</app-event>
+                <app-event [value]="'string'">Event 1</app-event>
+            </div>
+    - Passing Complex Objects
+        - change app.component.ts
+            import {Component} from '@angular/core'
+
+            @Component({
+                selector: 'app-root',
+                templateUrl: './app.component.html'
+            })
+            export class AppComponent {
+                event: any = {
+                    time : "08:00",
+                    subject : "Breakfast with simon"
+                };
+            }
+        - change app.component.html
+            <div class="col-md-9">
+                <app-event [value]="event"></app-event>
+            </div>
+        - change event.component.html
+            <h1> {{value.time}} : {{value.location}} </h1>
+3. INITIAL EVENTS LIST
+    - *ngFor
+        - change app.component.ts
+            import {Component} from '@angular/core'
+
+            @Component({
+                selector: 'app-root',
+                templateUrl: './app.component.html'
+            })
+            export class AppComponent {
+                event: Array<any> = [
+                    { time : "08:00", subject : "Breakfast with simon" },
+                    { time : "09:00", subject : "Meeting" },
+                    { time : "10:00", subject : "Study" }
+                ];
+            }
+
+        - Change app.component.html to work with ngFor which is implementation of 
+        for loop. Its designed to work with collections.
+            <ul>
+                <li *ngFor="let event of events; let i = index;">
+                    {{i}} {{event.subject}}
+                </li>
+            </ul>
+    - <ng-container>
+        - In the above example we have used ngFor inside html tag like <li>
+            - This means that given tag will be duplicated as many times 
+            - But sometimes you may want to use ngFor outside a tag
+                (You may not want to reepeat any tag)
+            - For this case we can use special angular tag as follows
+                <ng-container *ngFor="let event of events; let i = index">
+                    {{i}} {{event.subject}}
+                </ng-container>
+    - Using ngFor to pass data
+        - change app.component.html
+            <ul>
+                <li *ngFor="let event of events; let i = index;">
+                    <app-event [value]="event"></app-event>
+                </li>
+            </ul>
+4. CONDITIONAL RENDERING
+    - ngIf
+        - Simple if condition
+            <p *ngIf='true'></p>
+            <p *ngIf='false'></p>
+        - Display a paragraph weather description exists or not
+            <p *ngIf="value.description">
+                {{value.description}}
+            </p>
+    - If-else
+        - Angular templates (<ng-template>)
+            - will contain part of a template
+            - can be composed with other templates in order to form the 
+                final component template.
+            - Its a template element Angular uses with structural directives
+                (*ngIf, *ngFor, [ngSwitch] and custom directives)
+                <div *ngIf="isLogged; else loggedOut">
+                    Welcome
+                </div>
+
+                <ng-template #loggedOut>
+                    Login please
+                </ng-template>
+
+                - Template reference variable (#loggedOut)
+                - <ng-template> is virtual. i.e the contents wont actually exist
+                    int the compiled DOM, until its needed.
+                - In short its a virtual container that wont render any contents 
+                    until its ready.
+
+                <ng-container *ngIf="isLogged; then loggedIn; else loggedOut">
+                </ng-container>
+
+                <ng-template #loggedOut>
+                    Welcome
+                </ng-template>
+
+                <ng-template #loggedOut>
+                    Login please
+                </ng-template>
+
+5. EMIT AND HANDLE EVENTS
+    - change app.component.ts
+        import {Component} from '@angular/core'
+
+        @Component({
+            selector: 'app-root',
+            templateUrl: './app.component.html'
+        })
+        export class AppComponent {
+            event: Array<any> = [
+                { time : "08:00", subject : "Breakfast with simon" },
+                { time : "09:00", subject : "Meeting" },
+                { time : "10:00", subject : "Study" }
+            ];
+
+            deleteEvent(event:any) {
+                const itemIndex = this.events.findIndex(el => el === event);
+                this.events.splice(itemIndex, 1);
+            }
+        }
+    - handling click event in event.component.ts
+        import {Component} from '@angular/core'
+
+        @Component({
+            selector: 'app-event',
+            templateUrl: './event.component.html'
+        })
+        export class EventComponent {
+            @Input() value: any;
+
+            handleDeleteClick() {
+                console.log("Delete Clicked");
+            }
+
+        }
+    - update event.component.html
+        <button (click)="handleDeleteClick()">Delete</button>
+
+    - Event emitting
+        - In order to call the parent AppComponent deleteEvent() function 
+            from child (Event) component we have to emit an Event
+            from one component and catch it in another.
+        - Whenever we want to emit an Event (click, hover...) we have to import
+            EventEmmiter first.
+        - Since we will transfer outside component, we also have to import 
+            Output directive
+        - Define the @Output in EventComponent class as follows
+            @Output() deleteEventInstanceEvent: EventEmmiter <any> = new EventEmmiter<any>();
+        - update handleDeleteClick() method as follows
+            handleDeleteClick() {
+                this.deleteEventInstanceEvent.emit(this.value);
+            }
+        - Catching and handling events
+            <app-event [value]="event" 
+                (deleteEventInstanceEvent)="deleteEvent($event)"></app-event>
+6. FORMS AND INPUTS
+    - ngModel : the easiest way to work with forms is to use ngModel
+                directive
+        - Import FormsModule in app.module.ts
+            import { FormsModule } from "@angular/forms";
+        - Add FormsModule to the imports[] array:
+            imports: [
+                ...
+                FormsModule
+            ],
+            ...
+        - Update the modal body with in the app.component.html
+            <div class="modal-body">
+                <input [(ngModel)]="name" #ctrl="ngModel">
+                {{name}}
+            </div>
+    - formControl
+        - Import FormsModule, and ReactiveFormsModule inside module
+            import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+
+            ....
+            imports:[
+                BrowserModule,
+                BrowserAnimationsModule,
+                MDBBootstrapModule.forRoot(),
+                FormsModule,
+                ReactiveFormsModule
+            ],
+            ..
+        - Import FormControl in app.component.ts
+            import {FormControl} from "@angular/forms";
+        - Define new variables in app.component.ts
+            export class AppComponent {
+                timeInput = new FormControl();
+                subjectInput = new FormControl();
+            }
+        - Update app.component.html
+            <div class="form-group">
+                <input type="text" [formControl]="timeInput"/>
+            </div>
+            <div class="form-group">
+                <input type="text" [formControl]="subjectInput"/>
+            </div>
+7. ADD NEW EVENT
+    - change app.component.ts
+        ...
+        export class AppComponent{
+            addNewEvent() {
+                const newEvent: any = {
+                    time: this.timeInput.value,
+                    subject: this.subjectInput.value
+                };
+
+                this.events.push(newEvent);
+
+                this.timeInput.setValue('');
+                this.subjectInput.setValue('');
+
+                ...
+            }
+        }
+                 
+        
+        
