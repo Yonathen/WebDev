@@ -1,3 +1,4 @@
+
 1. OBSERVABLES
     - provide support for passing messages between publishers and subscribers
         in your application.
@@ -78,7 +79,7 @@
 4. CREATING OBSERVABLES
     - Use Observable constructor to create an observable stream of any type.
     - The constructor takes as its argument the subscriber function to run 
-        when the boservable's subscribe() nethod executes.
+        when the observable's subscribe() method executes.
     - To create an observable equivalent to the of(1,2,3)
         // This function runs when subscribe is called
         function sequenceSubscriber(observer) {
@@ -117,7 +118,7 @@
         - Creating an observable from promise
             import { from } from 'rxjs';
 
-            // Create an boservable out of a promise
+            // Create an observable out of a promise
             const data = from(fetch('/api/endpoint'));
 
             // Subscribe to begin listening for async result
@@ -159,21 +160,29 @@
             apiData.subscribe(res => console.log(res.status, res.responce));
 
     - Operator functions
-        - these are functions that build on the observables foundation to enable 
-            sopisticated maipulation of collections.
-        - they take configuration options and they return a function that takes a 
+        - these are functions that are built on the observables foundation in order to enable 
+            sophisticated manipulation of collections.
+        - they take configuration options and they return a function that will take a 
             source observable.
-        - When executing this returned function, the operator observes the source 
-            observable's emitted values, transform them, and returns a new 
-            observable of those transformed values.
+        - When we execute this returned function, 
+            - the operator observes the source observable's emitted values, 
+            - transform them, and 
+            - returns a new observable of those transformed values.
         - Map operator
             import { map } from 'rxjs/operators';
-
+            
+            // Create source observable
             const nums  = of(1, 2, 3);
 
+            // Use the map operator that take's configuration option and 
+            // return a function that will take a source observable
             const sqrValues = map ( (val: number) => val * val);
+            
+            // Pass the source observable and create new observable;
             const sqrNums = sqrValues(nums);
 
+            // Subscribe to the new observable and display the 
+            // transformed values.
             sqrNums.subscribe(x => console.log(x));
 
             /*
@@ -195,7 +204,7 @@
             
         - Pipe function
             - you can use pipes to link operators together.
-            - Pipes let you combine multiple functions into a single function.
+            - Pipes let's you combine multiple functions into a single function.
             - pipe() function takes as its input arguments that functions 
                 you want to combine and return a new function that,
                 when executed, runs the composed function in sequence.
@@ -230,6 +239,185 @@
                 
                 // Subscribe to get values
                 squareOdd.subscribe(x => console.log(x))
+
+MULTICASTING
+- Is the term used to describe the situation in which each notification emitted by a single
+observable is received by multiple observers.
+    
+- Whether or not an observable is capable of multicasting depends upon whether that observable 
+is hot or cold.
+    
+    - hot and cold observables are characterised by where the producer of the observable's
+    notifications is created.
+        
+        - An observable is cold if the producer of its notifications is created whenever
+        an observer subscribes to it.
+        ex: timer is cold observable because each time a subscription is made, a new timer is created.
+        
+        - An observable is hot if the producer of its notifications is not created each time an 
+        an observer subscribeses to it.
+        ex: fromEvent is hot because the element that produces the event exists in the DOM-
+        it's not created inside the observer
+        
+   - for more go to https://medium.com/@benlesh/hot-vs-cold-observables-f8094ed53339
+   
+- Cold observables are unicast, as each observers receives notifications from producer that was 
+    created when the observer subscribed.
+- Hot observables are multicast, as each observer receives notifications from the same producer
+
+SUBJECT
+- An RxJS Subject is a special type of Observable that allows values to be multicasted to many
+Observers. While plain cold Observables are unicast, Subjects are multicast.
+- Every Subject is and Observable.
+    - Given a subject you can subscribe to it by providing observer
+    - From Observer perspective, it cannot tell whether the Observable execution is comming from 
+    plain unicast observable or a Subject.
+    - Internally to the Subject, subscribe doesent invoke a new execution that delivers values rather
+    it will simply registers the given Observer in a list of Observers, similarly to how addListener
+    usualy work in other libraries and languages.
+- Every Subject is an Observer
+    - It is an object with methods next(v), error(e) and complete()
+    - To feed a new value to the subject, just call next(theNewValue) and it will be multicasted
+    to the Observers registered to listen to the Subject.
+    
+    var subject new Rx.Subject();
+    
+    subject.subscribe({
+        next: (v) => console.log('Observer A : ' + v)
+    });
+    
+    subject.subscribe({
+        next: (v) => console.log('Observer B : ' + v)
+    });
+    
+    subject.next(1);
+    
+    subject.next(2);
+    
+    /*
+    Log 
+    Observer A : 1
+    Observer B : 1
+    Observer A : 2
+    Observer B : 2
+    */
+    
+MULTICASTING AND SUBJECT
+- A subject is both an observable and an observer.
+- By subscribing observers to a subject and then subscribing the subject to a cold observeable,
+a cold observable can be made hot.
+    import { Observable } from "rxjs/Observable";
+    import { Subject } from "rxjs/Subject";
+    import "rxjs/add/observable/defer";
+    import "rxjs/add/observable/of";
+    
+    /*
+    - source is cold observable
+    - each time an observer subscribes to the source, the factory function passed to defer will
+    create an observable that emits a random number and then completes.
+    */
+    const source = Observable.defer(() = > Observable.of(
+        Math.floor(Math.random() * 100);
+    ));
+    
+    // Create an observer function.
+    function observer (name: string) {
+        return {
+            next: (value: number) => console.log(`observer ${name}: ${value}`),
+            complete: () => console.log(`observer ${name}: complete`),
+        }
+    }
+    
+    // Create a subject
+    const subject = new Subject <number> ();
+    
+    // Subscribe observers to the subject, to multicast the cold observer called source defined above
+    subject.subscribe(observer("a"));
+    subject.subscribe(observer("a"));
+    
+    /*
+    - Subsctibe the subject to the cold observable called "source" which is defined above
+    - The source will see only one subscription and will produce one next notification containing the
+    random number and will only produce one complete notification.
+    - The subject will send those notification to its registered observers
+    */
+    source.subscribe(subject);
+    
+    /*
+    Output log
+    observer a: 42
+    observer b: 42
+    observer a: complete
+    observer b: complete
+    */
+    
+    /*
+    Nutshell
+    - source observable
+    - subeject is subscribed to the source
+    - multiple observers are subscribed to subject
+    */
+    
+MULTICAST OPERATOR AND CONNECTABLE OBSERVABLES
+- RxJS includes a multicast operator that can be allied to observable to make it hot.
+- Parameters: 
+    - Subject or Subject Factory : 
+    - Selector ( Optional ) : use the multicasted source stream as many times as needed without 
+        causing multiple subscriptions to the source. 
+- Returns:
+    - An Observable that emits the result of invoking the selector on the items emitted by a 
+    ConnectableObservable that shares a single subscription to underlying stream.
+    
+    import { Observable } from "rxjs/Observable";
+    import { Subject } from "rxjs/Subject";
+    import "rxjs/add/observable/defer";
+    import "rxjs/add/observable/of";
+    import "rxjs/add/operator/multicast";
+
+    const source = Observable.defer(() => Observable.of(
+      Math.floor(Math.random() * 100)
+    ));
+
+    function observer(name: string) {
+      return {
+        next: (value: number) => console.log(`observer ${name}: ${value}`),
+        complete: () => console.log(`observer ${name}: complete`)
+      };
+    }
+
+    const m = source.multicast(new Subject<number>());
+    m.subscribe(observer("a"));
+    m.subscribe(observer("b"));
+    
+    // Until the connect is called next is not executed
+    m.connect(); 
+    
+    /*
+    Output Log
+    observer a: 54
+    observer b: 54
+    observer a: complete
+    observer b: complete
+    */
+- Connectable Observers has another method called refCount
+    - refCount : look like an operator
+        - Its a method that's called on an observable that returns another observable
+        - but its ConactableObservable method and doesnot need to be imported.
+        - returns an observable that maintains a reference count of the subscription
+            that have been made.
+        - Lets change the above as
+            const m = source.multicast(new Subject<number>()).refCount();
+            m.subscribe(observer("a"));
+            m.subscribe(observer("b"));
+            /*
+            Output Log
+            observer a: 54
+            observer a: complete
+            observer b: complete
+            */
+         - Only the first receives the next notification.
+            
+-
 
 
             
